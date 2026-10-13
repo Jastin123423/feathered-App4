@@ -610,7 +610,8 @@ fun DiscussionsSheetDialog(
     onDismiss: () -> Unit,
     onAddComment: (String) -> Unit,
     onLikeComment: (Long) -> Unit,
-    onDeleteComment: ((Long) -> Unit)? = null
+    onDeleteComment: ((Long) -> Unit)? = null,
+    onProfileClick: ((User) -> Unit)? = null
 ) {
     var newCommentText by remember { mutableStateOf("") }
     var replyingTo by remember { mutableStateOf<String?>(null) }
@@ -685,7 +686,10 @@ fun DiscussionsSheetDialog(
                             border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF1E293B))
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.clickable { onProfileClick?.invoke(post.author) }
+                                ) {
                                     AsyncImage(
                                         model = post.author.profileImageUrl,
                                         contentDescription = post.author.name,
@@ -754,7 +758,8 @@ fun DiscussionsSheetDialog(
                                 comment = comment,
                                 onLike = { onLikeComment(comment.id) },
                                 onReply = { replyingTo = comment.author.name },
-                                onMoreOptions = { selectedCommentForActions = comment }
+                                onMoreOptions = { selectedCommentForActions = comment },
+                                onUserClick = { onProfileClick?.invoke(comment.author) }
                             )
                             Spacer(modifier = Modifier.height(14.dp))
                         }
@@ -901,7 +906,8 @@ private fun CommentItemRow(
     comment: Comment,
     onLike: () -> Unit,
     onReply: () -> Unit,
-    onMoreOptions: (() -> Unit)? = null
+    onMoreOptions: (() -> Unit)? = null,
+    onUserClick: (() -> Unit)? = null
 ) {
     Row(modifier = Modifier.fillMaxWidth()) {
         AsyncImage(
@@ -911,6 +917,7 @@ private fun CommentItemRow(
             modifier = Modifier
                 .size(36.dp)
                 .clip(CircleShape)
+                .clickable { onUserClick?.invoke() }
         )
 
         Spacer(modifier = Modifier.width(10.dp))
@@ -930,7 +937,10 @@ private fun CommentItemRow(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.clickable { onUserClick?.invoke() }
+                        ) {
                             Text(
                                 text = comment.author.name,
                                 fontWeight = FontWeight.Bold,

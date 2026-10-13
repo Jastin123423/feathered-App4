@@ -256,18 +256,26 @@ fun FeatheredApp(
                         currentUser = uiState.currentUser,
                         stories = uiState.stories,
                         posts = uiState.posts,
+                        allUsers = uiState.users,
+                        groups = uiState.groups,
+                        isFeedLoading = uiState.isFeedLoading,
+                        onRefresh = { viewModel.refreshFeed() },
                         onOpenCreatePost = { viewModel.setShowCreatePostDialog(true) },
                         onStoryClick = { viewModel.setSelectedStory(it) },
                         onLikePost = { viewModel.toggleLikePost(it) },
                         onCommentPost = { viewModel.setSelectedPostForComments(it) },
                         onSavePost = { viewModel.toggleSavePost(it) },
-                        onUserClick = { viewModel.startConversationWithUser(it) },
+                        onUserClick = { viewModel.openUserProfile(it) },
                         onAddStoryClick = { viewModel.setShowCreateStoryDialog(true) },
                         onReactPost = { postId, reaction -> viewModel.reactToPost(postId, reaction) },
                         onSharePost = { postId -> viewModel.sharePost(postId) },
                         onOpenProduct = { product -> viewModel.setSelectedProductForDetail(product) },
                         onOpenEvent = { _ -> viewModel.setScreen(Screen.EVENTS) },
-                        onOpenGroup = { _ -> viewModel.setScreen(Screen.GROUPS) },
+                        onOpenGroup = { groupId ->
+                            val grp = uiState.groups.find { it.id == groupId }
+                            val admin = grp?.let { g -> uiState.users.find { it.id == g.adminId } } ?: uiState.currentUser
+                            viewModel.openUserProfile(admin)
+                        },
                         onOpenVideos = { viewModel.setScreen(Screen.REELS) },
                         onDeletePost = { viewModel.deletePost(it) },
                         onEditPost = { id, text -> viewModel.editPost(id, text) },
@@ -297,7 +305,7 @@ fun FeatheredApp(
                         onLikePost = { viewModel.toggleLikePost(it) },
                         onCommentPost = { viewModel.setSelectedPostForComments(it) },
                         onSavePost = { viewModel.toggleSavePost(it) },
-                        onUserClick = { viewModel.startConversationWithUser(it) },
+                        onUserClick = { viewModel.openUserProfile(it) },
                         onBack = { viewModel.setScreen(Screen.FEED) },
                         modifier = screenModifier
                     )
@@ -357,7 +365,7 @@ fun FeatheredApp(
                         user = activeUser,
                         currentUser = uiState.currentUser,
                         allUsers = uiState.users,
-                        allPosts = uiState.posts,
+                        allPosts = uiState.userProfilePosts[activeUser.id] ?: uiState.posts.filter { it.author.id == activeUser.id },
                         allReels = uiState.reels,
                         allStories = uiState.stories,
                         allProducts = uiState.products,
@@ -400,7 +408,7 @@ fun FeatheredApp(
                         onProfileClick = { userId ->
                             val targetUser = uiState.users.find { it.id == userId }
                             if (targetUser != null) {
-                                viewModel.startConversationWithUser(targetUser)
+                                viewModel.openUserProfile(targetUser)
                             }
                         },
                         onBack = { viewModel.setScreen(Screen.FEED) },
@@ -420,7 +428,7 @@ fun FeatheredApp(
                         onProfileClick = { userId ->
                             val targetUser = uiState.users.find { it.id == userId }
                             if (targetUser != null) {
-                                viewModel.startConversationWithUser(targetUser)
+                                viewModel.openUserProfile(targetUser)
                             }
                         },
                         onBack = { viewModel.setScreen(Screen.FEED) },
@@ -761,7 +769,7 @@ fun FeatheredApp(
                 viewModel.setSelectedStory(null)
                 val user = uiState.users.find { it.id == authorId }
                 if (user != null) {
-                    viewModel.startConversationWithUser(user)
+                    viewModel.openUserProfile(user)
                 }
             }
         )

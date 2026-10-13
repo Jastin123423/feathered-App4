@@ -49,6 +49,10 @@ fun FeedScreen(
     onSavePost: (Long) -> Unit,
     onUserClick: (User) -> Unit,
     onAddStoryClick: () -> Unit = onOpenCreatePost,
+    allUsers: List<User> = emptyList(),
+    groups: List<Group> = emptyList(),
+    isFeedLoading: Boolean = false,
+    onRefresh: (() -> Unit)? = null,
     onReactPost: ((Long, String) -> Unit)? = null,
     onSharePost: ((Long) -> Unit)? = null,
     onOpenProduct: ((Product) -> Unit)? = null,
@@ -204,10 +208,10 @@ fun FeedScreen(
                 )
 
                 // Interleaved Widget 1: People You May Know after 2nd post
-                if (index == 1) {
+                if (index == 1 && allUsers.isNotEmpty()) {
                     PeopleYouMayKnowSection(
                         currentUser = currentUser,
-                        allUsers = MockData.users.filter { it.id != currentUser.id },
+                        allUsers = allUsers.filter { it.id != currentUser.id },
                         followStates = followStates,
                         onFollowToggle = { uid ->
                             val current = followStates[uid] ?: false
@@ -224,15 +228,19 @@ fun FeedScreen(
                 }
 
                 // Interleaved Widget 2: Groups You May Join after 4th post
-                if (index == 3 && MockData.groups.isNotEmpty()) {
+                if (index == 3 && groups.isNotEmpty()) {
                     GroupsYouMayJoinSection(
-                        groups = MockData.groups,
+                        groups = groups,
                         joinedStates = groupJoinedStates,
                         onJoinToggle = { gid ->
                             val current = groupJoinedStates[gid] ?: false
                             groupJoinedStates = groupJoinedStates + (gid to !current)
                         },
-                        onGroupClick = { gid -> onOpenGroup?.invoke(gid) }
+                        onGroupClick = { gid ->
+                            val grp = groups.find { it.id == gid }
+                            val admin = grp?.let { g -> allUsers.find { it.id == g.adminId } } ?: currentUser
+                            onUserClick(admin)
+                        }
                     )
                     Box(
                         modifier = Modifier
@@ -240,6 +248,46 @@ fun FeedScreen(
                             .height(8.dp)
                             .background(Color(0xFF050B18))
                     )
+                }
+            }
+
+            // Empty or loading state for feed
+            if (posts.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 48.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (isFeedLoading) {
+                            CircularProgressIndicator(
+                                color = Color(0xFF1877F2),
+                                modifier = Modifier.size(36.dp)
+                            )
+                        } else {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Text(
+                                    text = "No posts available",
+                                    color = Color(0xFF94A3B8),
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                onRefresh?.let { doRefresh ->
+                                    Button(
+                                        onClick = doRefresh,
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1877F2)),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text("Refresh Feed", color = Color.White)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -273,7 +321,7 @@ fun FeedScreen(
         reactionsSheetPost?.let { currentPost ->
             ReactionsSheetDialog(
                 post = currentPost,
-                allUsers = MockData.users,
+                allUsers = allUsers,
                 onDismiss = { reactionsSheetPost = null },
                 onUserClick = {
                     reactionsSheetPost = null
@@ -313,7 +361,11 @@ fun FeedScreen(
                 onAddComment = { commentText ->
                     onCommentPost(currentPost)
                 },
-                onLikeComment = { /* Liked */ }
+                onLikeComment = { /* Liked */ },
+                onProfileClick = { author ->
+                    discussionsSheetPost = null
+                    onUserClick(author)
+                }
             )
         }
 
@@ -763,7 +815,7 @@ fun WebPostCard(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
                                 color = Color(0xFFF8FAFC),
-                                modifier = Modifier.clickable { onOpenGroup(post.groupId) }
+                                modifier = Modifier.clickable(onClick = onUserClick)
                             )
                         } else {
                             Text(
@@ -799,11 +851,20 @@ fun WebPostCard(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         if (post.groupId != null) {
-                            Text(
-                                text = "${post.author.name} • ${post.timestamp}",
-                                fontSize = 12.sp,
-                                color = Color(0xFF94A3B8)
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = post.author.name,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFFCBD5E1),
+                                    modifier = Modifier.clickable(onClick = onUserClick)
+                                )
+                                Text(
+                                    text = " • ${post.timestamp}",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF94A3B8)
+                                )
+                            }
                         } else {
                             Text(
                                 text = post.timestamp,
@@ -1796,7 +1857,9 @@ fun PeopleYouMayKnowSection(
                                     color = Color(0xFFF8FAFC),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable { onUserClick(user) }
                                 )
                                 if (user.isVerified) {
                                     Spacer(modifier = Modifier.width(3.dp))
@@ -1932,7 +1995,8 @@ fun GroupsYouMayJoinSection(
                                 fontSize = 15.sp,
                                 color = Color(0xFFF8FAFC),
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.clickable { onGroupClick(group.id) }
                             )
 
                             Spacer(modifier = Modifier.height(2.dp))

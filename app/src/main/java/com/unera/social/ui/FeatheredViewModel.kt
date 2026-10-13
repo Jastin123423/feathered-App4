@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.unera.social.data.MarketplaceApiService
 import com.unera.social.data.MockData
+import com.unera.social.data.PostsApiService
 import com.unera.social.model.*
 import com.unera.social.ui.components.PostUploadState
 import kotlinx.coroutines.Job
@@ -18,7 +19,10 @@ data class FeatheredUiState(
     val currentScreen: Screen = Screen.FEED,
     val currentUser: User = MockData.currentUser,
     val users: List<User> = MockData.users,
-    val posts: List<Post> = MockData.posts,
+    val posts: List<Post> = emptyList(),
+    val isFeedLoading: Boolean = false,
+    val userProfilePosts: Map<Long, List<Post>> = emptyMap(),
+    val isProfilePostsLoading: Boolean = false,
     val stories: List<Story> = MockData.stories,
     val reels: List<Reel> = MockData.reels,
     val products: List<Product> = MockData.products,
@@ -163,6 +167,41 @@ class FeatheredViewModel : ViewModel() {
 
     init {
         refreshLiveProducts()
+        refreshFeed()
+    }
+
+    fun refreshFeed() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isFeedLoading = true) }
+            val isUserLoggedIn = _uiState.value.isLoggedIn && !_uiState.value.isGuest
+            val livePosts = if (isUserLoggedIn) {
+                // Logged in feed fetches live data from api/feeds
+                PostsApiService.fetchFeedPosts(userId = _uiState.value.currentUser.id)
+            } else {
+                // Non-logged in feed fetches from api/posts
+                PostsApiService.fetchPublicPosts()
+            }
+            _uiState.update { state ->
+                state.copy(
+                    posts = livePosts,
+                    isFeedLoading = false
+                )
+            }
+        }
+    }
+
+    fun fetchUserProfilePosts(userId: Long) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isProfilePostsLoading = true) }
+            val userPosts = PostsApiService.fetchUserPosts(userId)
+            _uiState.update { state ->
+                val updatedMap = state.userProfilePosts + (userId to userPosts)
+                state.copy(
+                    userProfilePosts = updatedMap,
+                    isProfilePostsLoading = false
+                )
+            }
+        }
     }
 
     fun refreshLiveProducts() {
@@ -194,6 +233,11 @@ class FeatheredViewModel : ViewModel() {
         }
         if (screen == Screen.MARKETPLACE) {
             refreshLiveProducts()
+        } else if (screen == Screen.FEED) {
+            refreshFeed()
+        } else if (screen == Screen.PROFILE) {
+            val uid = _uiState.value.selectedUserProfile?.id ?: _uiState.value.currentUser.id
+            fetchUserProfilePosts(uid)
         }
     }
 
@@ -847,6 +891,7 @@ class FeatheredViewModel : ViewModel() {
                 currentScreen = Screen.PROFILE
             )
         }
+        fetchUserProfilePosts(user.id)
     }
 
     fun openUserProfileById(userId: Long) {
@@ -855,12 +900,14 @@ class FeatheredViewModel : ViewModel() {
     }
 
     fun openCurrentUserProfile() {
+        val current = _uiState.value.currentUser
         _uiState.update { state ->
             state.copy(
-                selectedUserProfile = state.currentUser,
+                selectedUserProfile = current,
                 currentScreen = Screen.PROFILE
             )
         }
+        fetchUserProfilePosts(current.id)
     }
 
     fun toggleVerifyUser(userId: Long) {
@@ -1741,6 +1788,7 @@ class FeatheredViewModel : ViewModel() {
                 currentScreen = Screen.FEED
             )
         }
+        refreshFeed()
     }
 
     fun loginUser(email: String, pass: String): Boolean {
@@ -1756,6 +1804,7 @@ class FeatheredViewModel : ViewModel() {
                 currentScreen = Screen.FEED
             )
         }
+        refreshFeed()
         return true
     }
 
@@ -1790,6 +1839,7 @@ class FeatheredViewModel : ViewModel() {
                 currentScreen = Screen.FEED
             )
         }
+        refreshFeed()
         return true
     }
 
@@ -1801,5 +1851,6 @@ class FeatheredViewModel : ViewModel() {
                 authMode = "login"
             )
         }
+        refreshFeed()
     }
 }
