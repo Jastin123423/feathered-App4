@@ -1,0 +1,1113 @@
+package com.unera.social.data
+
+import com.unera.social.model.*
+
+object MockData {
+    val currentUser = User(
+        id = 101L,
+        name = "Jastin Jovian",
+        username = "jastin_jovian",
+        profileImageUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
+        coverImageUrl = "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200",
+        bio = "Tech creator & digital explorer 🌍 Building next-gen social networks. Connect, Create, Move! ✨",
+        location = "Dar es Salaam, Tanzania",
+        followersCount = 3840,
+        followingCount = 485,
+        isVerified = true,
+        isOnline = true
+    )
+
+    val users = listOf(
+        currentUser,
+        User(
+            id = 102L,
+            name = "Amina Mwangi",
+            username = "amina_m",
+            profileImageUrl = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
+            coverImageUrl = "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200",
+            bio = "Visual storyteller & coffee enthusiast ☕",
+            location = "Dar es Salaam, Tanzania",
+            followersCount = 5200,
+            followingCount = 310,
+            isVerified = true,
+            isOnline = true,
+            birthDate = "1998-10-11",
+            isFollowing = false
+        ),
+        User(
+            id = 103L,
+            name = "David Kimaro",
+            username = "david_k",
+            profileImageUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
+            coverImageUrl = "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1200",
+            bio = "Wildlife photographer & conservation advocate 🦁",
+            location = "Arusha, Tanzania",
+            followersCount = 14200,
+            followingCount = 190,
+            isVerified = true,
+            isOnline = false,
+            birthDate = "1995-10-11",
+            isFollowing = false
+        ),
+        User(
+            id = 104L,
+            name = "Zahara Hassan",
+            username = "zahara_style",
+            profileImageUrl = "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400",
+            coverImageUrl = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200",
+            bio = "Fashion designer & lifestyle blogger ✨",
+            location = "Dar es Salaam, Tanzania",
+            followersCount = 8900,
+            followingCount = 420,
+            isVerified = true,
+            isOnline = true,
+            birthDate = "1999-10-15",
+            isFollowing = false
+        ),
+        User(
+            id = 105L,
+            name = "Samuel Adebayo",
+            username = "sam_ade",
+            profileImageUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
+            coverImageUrl = "https://images.unsplash.com/photo-1516251193007-45ef944ab0c6?w=1200",
+            bio = "Afrobeats music producer & sound designer 🎵",
+            location = "Lagos, Nigeria",
+            followersCount = 21000,
+            followingCount = 612,
+            isVerified = true,
+            isOnline = false,
+            birthDate = "1997-10-22",
+            isFollowing = false
+        ),
+        User(
+            id = 106L,
+            name = "Grace Ndlovu",
+            username = "grace_tech",
+            profileImageUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400",
+            coverImageUrl = "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200",
+            bio = "Frontend Architect & UI/UX explorer 🚀",
+            location = "Johannesburg, South Africa",
+            followersCount = 9450,
+            followingCount = 280,
+            isVerified = true,
+            isOnline = true,
+            birthDate = "1996-11-04",
+            isFollowing = false
+        ),
+        User(
+            id = 107L,
+            name = "Kwame Mensah",
+            username = "kwame_creative",
+            profileImageUrl = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400",
+            coverImageUrl = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200",
+            bio = "Digital animator & 3D artist 🎨",
+            location = "Accra, Ghana",
+            followersCount = 11300,
+            followingCount = 340,
+            isVerified = true,
+            isOnline = true,
+            birthDate = "1998-10-18",
+            isFollowing = false
+        )
+    )
+
+    val stories = listOf(
+        Story(
+            id = 1L,
+            author = currentUser,
+            mediaUrl = "https://images.unsplash.com/photo-1516251193007-45ef944ab0c6?w=800",
+            timestamp = "Just now",
+            type = "image",
+            musicTitle = "Asake - Lonely At The Top",
+            viewsCount = 34,
+            reactionsCount = 12,
+            commentsCount = 4,
+            viewers = listOf(users[1], users[2], users[3])
+        ),
+        Story(
+            id = 2L,
+            author = users[1],
+            mediaUrl = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800",
+            timestamp = "2h ago",
+            type = "image",
+            viewsCount = 58,
+            reactionsCount = 19,
+            commentsCount = 6,
+            viewers = listOf(currentUser, users[2], users[4])
+        ),
+        Story(
+            id = 3L,
+            author = users[2],
+            mediaUrl = "",
+            timestamp = "4h ago",
+            type = "text",
+            textContent = "Building something amazing with modern tech! Never stop shipping. 🚀✨",
+            backgroundStyle = "linear-gradient(45deg, #1877F2, #0055FF)",
+            musicTitle = "Burna Boy - City Boys",
+            viewsCount = 82,
+            reactionsCount = 27,
+            commentsCount = 8,
+            viewers = listOf(currentUser, users[1], users[3])
+        ),
+        Story(
+            id = 4L,
+            author = users[3],
+            mediaUrl = "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800",
+            timestamp = "6h ago",
+            type = "video",
+            musicTitle = "Rema - Calm Down",
+            viewsCount = 120,
+            reactionsCount = 45,
+            commentsCount = 14,
+            viewers = listOf(currentUser, users[1], users[2], users[4])
+        ),
+        Story(
+            id = 5L,
+            author = users[4],
+            mediaUrl = "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800",
+            timestamp = "8h ago",
+            type = "image",
+            viewsCount = 94,
+            reactionsCount = 31,
+            commentsCount = 5,
+            viewers = listOf(currentUser, users[2])
+        )
+    )
+
+    val posts = listOf(
+        Post(
+            id = 1001L,
+            author = users[1],
+            content = "Golden hour by the coast! There's nothing quite like the ocean breeze to recharge creative energy after a long week of work. Wishing everyone an inspired weekend! 🌊✨",
+            mediaUrl = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800",
+            mediaUrls = listOf(
+                "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800",
+                "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=800",
+                "https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=800"
+            ),
+            timestamp = "2 hours ago",
+            likesCount = 342,
+            commentsCount = 28,
+            sharesCount = 14,
+            isLiked = false,
+            isSaved = true,
+            feeling = "relaxed 😌",
+            location = "Kigamboni Beach, Dar es Salaam",
+            reactions = listOf(
+                UserReaction(userId = 101L, userName = "Jastin Jovian", userAvatar = users[0].profileImageUrl, type = "love"),
+                UserReaction(userId = 103L, userName = "David Kimaro", userAvatar = users[2].profileImageUrl, type = "like"),
+                UserReaction(userId = 104L, userName = "Zahara Hassan", userAvatar = users[3].profileImageUrl, type = "fire")
+            ),
+            comments = listOf(
+                Comment(
+                    id = 1L,
+                    author = currentUser,
+                    text = "Stunning view Amina! That lighting is unreal.",
+                    timestamp = "1h ago",
+                    likesCount = 8,
+                    isLiked = true
+                ),
+                Comment(
+                    id = 2L,
+                    author = users[2],
+                    text = "Pure peace. Love the tones in this shot!",
+                    timestamp = "45m ago",
+                    likesCount = 3,
+                    isLiked = false
+                )
+            )
+        ),
+        // Colored text post
+        Post(
+            id = 1005L,
+            author = users[2],
+            content = "Building something amazing with modern tech! Never stop shipping. 🚀✨ Every day is a chance to craft the future.",
+            backgroundStyle = "linear-gradient(45deg, #1877F2, #0055FF)",
+            timestamp = "3 hours ago",
+            likesCount = 612,
+            commentsCount = 42,
+            sharesCount = 31,
+            isLiked = true,
+            myReaction = "fire",
+            reactions = listOf(
+                UserReaction(userId = 101L, userName = "Jastin Jovian", userAvatar = users[0].profileImageUrl, type = "fire"),
+                UserReaction(userId = 102L, userName = "Amina Mwangi", userAvatar = users[1].profileImageUrl, type = "love")
+            ),
+            comments = listOf(
+                Comment(
+                    id = 5L,
+                    author = users[1],
+                    text = "Words to live by! Can't wait to see the next release 🔥",
+                    timestamp = "2h ago",
+                    likesCount = 5
+                )
+            )
+        ),
+        // Multi-image Safari Post (4 images grid)
+        Post(
+            id = 1002L,
+            author = users[2],
+            content = "Sunrise safari in the Serengeti. Managed to capture this majestic pride resting just after dawn. Africa's wilderness never fails to leave me speechless. 🦁🌅",
+            mediaUrl = "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800",
+            mediaUrls = listOf(
+                "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800",
+                "https://images.unsplash.com/photo-1534177616072-ef7dc120449d?w=800",
+                "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=800",
+                "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800"
+            ),
+            timestamp = "5 hours ago",
+            likesCount = 890,
+            commentsCount = 64,
+            sharesCount = 52,
+            isLiked = true,
+            isSaved = true,
+            feeling = "grateful 🙏",
+            location = "Serengeti National Park, Tanzania",
+            reactions = listOf(
+                UserReaction(userId = 101L, userName = "Jastin Jovian", userAvatar = users[0].profileImageUrl, type = "love"),
+                UserReaction(userId = 104L, userName = "Zahara Hassan", userAvatar = users[3].profileImageUrl, type = "wow")
+            ),
+            comments = listOf(
+                Comment(
+                    id = 3L,
+                    author = users[3],
+                    text = "Incredible capture David! You have a true gift.",
+                    timestamp = "3h ago",
+                    likesCount = 12
+                )
+            )
+        ),
+        // Product / MarketPoint Post
+        Post(
+            id = 1006L,
+            author = users[3],
+            content = "Sony Alpha a7 IV Mirrorless Camera (Like New). Full-frame 33MP hybrid camera with 4K 60p video, 10-bit 4:2:2 recording, and next-generation autofocus. Box and accessories included!",
+            postType = "product",
+            mediaUrl = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800",
+            mediaUrls = listOf(
+                "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800",
+                "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=800"
+            ),
+            product = Product(
+                id = 301L,
+                title = "Sony Alpha a7 IV Mirrorless Camera (Like New)",
+                price = 4500000.0,
+                currency = "TZS",
+                category = "Electronics",
+                location = "Posta, Dar es Salaam",
+                imageUrl = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800",
+                images = listOf(
+                    "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800",
+                    "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=800"
+                ),
+                description = "Full-frame 33MP hybrid camera with 4K 60p video, 10-bit 4:2:2 recording, and next-generation autofocus.",
+                seller = users[3]
+            ),
+            timestamp = "6 hours ago",
+            likesCount = 195,
+            commentsCount = 18,
+            sharesCount = 8,
+            location = "Posta, Dar es Salaam"
+        ),
+        // Event Post
+        Post(
+            id = 1007L,
+            author = users[1],
+            content = "Dar Tech Summit 2026: AI & Mobile Frontiers. Join hundreds of builders, engineers, and product designers for an inspiring day of keynotes, workshops, and networking.",
+            postType = "event",
+            mediaUrl = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+            event = Event(
+                id = 401L,
+                title = "Dar Tech Summit 2026",
+                date = "Oct 24, 2026 • 09:00 AM",
+                location = "Julius Nyerere International Convention Centre",
+                imageUrl = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+                description = "Join hundreds of builders, engineers, and product designers for an inspiring day of keynotes, workshops, and networking.",
+                organizer = users[1],
+                goingCount = 240,
+                interestedCount = 85
+            ),
+            timestamp = "8 hours ago",
+            likesCount = 420,
+            commentsCount = 35,
+            sharesCount = 29
+        ),
+        // Group Career / Job Post
+        Post(
+            id = 1008L,
+            author = users[5],
+            groupId = 502L,
+            groupName = "Tanzania Tech & Careers",
+            groupImageUrl = "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400",
+            jobTitle = "Senior Mobile Engineer (Android & Kotlin)",
+            company = "Feathered Technologies",
+            jobType = "Full-time",
+            salary = "TZS 6,500,000 - 8,000,000 / mo",
+            location = "Dar es Salaam (Hybrid)",
+            applicationValue = "careers@feathered.social",
+            content = "We are hiring a passionate Senior Android Engineer to lead our mobile product architecture. Experience with Jetpack Compose, Kotlin Coroutines, and scalable design systems required.",
+            postType = "group_post",
+            timestamp = "10 hours ago",
+            likesCount = 280,
+            commentsCount = 22,
+            sharesCount = 40
+        ),
+        // Music Post
+        Post(
+            id = 1009L,
+            author = users[4],
+            content = "Check out my new Afrobeats single: 'Sunset Vibes' 🎵 produced live in studio. Available for streaming right now on Feathered Music!",
+            postType = "music",
+            mediaUrl = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800",
+            song = Song(
+                id = "1",
+                title = "Sunset Vibes",
+                artist = "Samuel Adebayo",
+                cover = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800",
+                audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+                duration = "3:45",
+                genre = "Afrobeats",
+                album = "Golden Horizons"
+            ),
+            timestamp = "12 hours ago",
+            likesCount = 520,
+            commentsCount = 47,
+            sharesCount = 19
+        ),
+        // Shared Post
+        Post(
+            id = 1010L,
+            author = currentUser,
+            content = "This was one of the best moments from the Serengeti tour. Huge congratulations to David for this incredible shot! 👏🔥",
+            postType = "shared_post",
+            sharedPost = Post(
+                id = 1002L,
+                author = users[2],
+                content = "Sunrise safari in the Serengeti. Managed to capture this majestic pride resting just after dawn. Africa's wilderness never fails to leave me speechless. 🦁🌅",
+                mediaUrl = "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800",
+                timestamp = "5 hours ago",
+                likesCount = 890,
+                commentsCount = 64
+            ),
+            timestamp = "Yesterday",
+            likesCount = 310,
+            commentsCount = 18,
+            sharesCount = 12
+        ),
+        // Sponsored Ad
+        Post(
+            id = 1011L,
+            author = User(
+                id = 999L,
+                name = "Kili Expeditions",
+                username = "kili_expeditions",
+                profileImageUrl = "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400",
+                isVerified = true
+            ),
+            content = "Climb Mount Kilimanjaro with certified guides & 98% summit success rate. Special seasonal 20% discount on 7-day Machame Route bookings this month! 🏔️✨",
+            isSponsored = true,
+            sponsoredHeadline = "Kilimanjaro Summit Season 2026",
+            sponsoredCtaText = "Book Now",
+            sponsoredCtaUrl = "https://featheredsocial.site/travel",
+            mediaUrl = "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800",
+            postType = "sponsored",
+            timestamp = "Sponsored",
+            likesCount = 1540,
+            commentsCount = 82,
+            sharesCount = 120
+        ),
+        Post(
+            id = 1004L,
+            author = currentUser,
+            content = "Proud to announce the new mobile experience of Feathered Social! Native performance, smoother feed, and instant connectivity. Let us know your feedback! 🚀⚡",
+            mediaUrl = "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800",
+            timestamp = "2 days ago",
+            likesCount = 1240,
+            commentsCount = 115,
+            sharesCount = 88,
+            isLiked = true
+        )
+    )
+
+    val reels = listOf(
+        Reel(
+            id = 201L,
+            author = users[3],
+            videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+            thumbnailUrl = "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800",
+            caption = "Behind the scenes of our new summer couture collection 👗✨",
+            musicTitle = "Zahara - Ocean Waves (Original)",
+            likesCount = 2840,
+            commentsCount = 192,
+            sharesCount = 84,
+            isLiked = false,
+            isSaved = true
+        ),
+        Reel(
+            id = 202L,
+            author = users[2],
+            videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+            thumbnailUrl = "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=800",
+            caption = "Wild cheetah sprinting at top speed across the plains 🐆💨",
+            musicTitle = "African Rhythms & Nature Sounds",
+            likesCount = 9410,
+            commentsCount = 630,
+            sharesCount = 420,
+            isLiked = true
+        ),
+        Reel(
+            id = 203L,
+            author = users[4],
+            videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+            thumbnailUrl = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800",
+            caption = "Making drums bounce in 10 seconds 🥁🔥 Listen with headphones!",
+            musicTitle = "Adebayo - Beat Break Vol. 4",
+            likesCount = 5120,
+            commentsCount = 380,
+            sharesCount = 210,
+            isLiked = false
+        )
+    )
+
+    val products = listOf(
+        Product(
+            id = 301L,
+            title = "Sony Alpha a7 IV Mirrorless Camera (Like New)",
+            price = 4500000.0,
+            currency = "TZS",
+            category = "Electronics",
+            location = "Dar es Salaam, Tanzania",
+            imageUrl = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800",
+            description = "Barely used Sony a7 IV body with original box, extra batteries and 64GB SD card. Shutter count under 3,000.",
+            seller = users[2]
+        ),
+        Product(
+            id = 302L,
+            title = "Handcrafted African Print Bomber Jacket",
+            price = 95000.0,
+            currency = "TZS",
+            category = "Clothing",
+            location = "Zanzibar, Tanzania",
+            imageUrl = "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800",
+            description = "100% authentic Kitenge fabric handmade bomber jacket. Unisex size M & L available. Vibrant colors.",
+            seller = users[3]
+        ),
+        Product(
+            id = 303L,
+            title = "Apple MacBook Pro M3 (16GB / 512GB SSD)",
+            price = 3800000.0,
+            currency = "TZS",
+            category = "Electronics",
+            location = "Nairobi, Kenya",
+            imageUrl = "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800",
+            description = "Space Gray MacBook Pro with M3 chip, pristine condition with 100% battery health and original 70W charger.",
+            seller = currentUser
+        ),
+        Product(
+            id = 304L,
+            title = "Acoustic Solid Mahogany Guitar with Gig Bag",
+            price = 350000.0,
+            currency = "TZS",
+            category = "Music",
+            location = "Lagos, Nigeria",
+            imageUrl = "https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=800",
+            description = "Warm resonance, great intonation, set up with fresh D'Addario strings. Perfect for both beginners and performers.",
+            seller = users[4]
+        )
+    )
+
+    val events = listOf(
+        Event(
+            id = 401L,
+            title = "East Africa Tech & Creators Summit 2026",
+            date = "Oct 24, 2026 • 9:00 AM",
+            location = "Julius Nyerere Int'l Convention Centre, Dar es Salaam",
+            imageUrl = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800",
+            description = "Join over 2,000 founders, creators, developers, and investors exploring the future of mobile technology and creative industries across Africa.",
+            interestedCount = 450,
+            goingCount = 180,
+            isInterested = true,
+            isGoing = false,
+            organizer = currentUser
+        ),
+        Event(
+            id = 402L,
+            title = "Zanzibar Sunset Acoustic Sessions",
+            date = "Nov 02, 2026 • 5:30 PM",
+            location = "Kendwa Rocks Beach, Zanzibar",
+            imageUrl = "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800",
+            description = "An unforgettable evening of live acoustic melodies, bonfire, and seaside vibes featuring top indie artists from around the region.",
+            interestedCount = 310,
+            goingCount = 95,
+            isInterested = false,
+            isGoing = true,
+            organizer = users[3]
+        ),
+        Event(
+            id = 403L,
+            title = "Wildlife Photography Masterclass in Arusha",
+            date = "Nov 15, 2026 • 8:00 AM",
+            location = "Arusha National Park Gate",
+            imageUrl = "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=800",
+            description = "Hands-on field workshop learning wildlife tracking, framing, fast action autofocus, and golden hour lighting techniques.",
+            interestedCount = 120,
+            goingCount = 40,
+            isInterested = false,
+            isGoing = false,
+            organizer = users[2]
+        )
+    )
+
+    val conversations = listOf(
+        Conversation(
+            id = "c1",
+            participant = users[1],
+            lastMessage = "Hey! Loved your latest post on Feathered!",
+            lastTimestamp = "10:32 AM",
+            unreadCount = 2,
+            messages = listOf(
+                ChatMessage("m1", users[1].id, "Hey Jastin, are you attending the summit next month?", "10:20 AM", false),
+                ChatMessage("m2", currentUser.id, "Yes absolutely! Speaking on the creator panel.", "10:25 AM", true),
+                ChatMessage("m3", users[1].id, "That's fantastic! Let's definitely catch up there.", "10:30 AM", false),
+                ChatMessage("m4", users[1].id, "Hey! Loved your latest post on Feathered!", "10:32 AM", false)
+            )
+        ),
+        Conversation(
+            id = "c2",
+            participant = users[2],
+            lastMessage = "Thanks for the feedback on the camera gear!",
+            lastTimestamp = "Yesterday",
+            unreadCount = 0,
+            messages = listOf(
+                ChatMessage("m21", currentUser.id, "David, is the Sony a7 IV still available on Marketplace?", "Yesterday", true),
+                ChatMessage("m22", users[2].id, "Yes it is! Body only or with the lens?", "Yesterday", false),
+                ChatMessage("m23", currentUser.id, "Body only. A friend in town is interested.", "Yesterday", true),
+                ChatMessage("m24", users[2].id, "Thanks for the feedback on the camera gear!", "Yesterday", false)
+            )
+        ),
+        Conversation(
+            id = "c3",
+            participant = users[3],
+            lastMessage = "New bomber jackets are ready for shipping! ✨",
+            lastTimestamp = "Oct 08",
+            unreadCount = 0,
+            messages = listOf(
+                ChatMessage("m31", users[3].id, "New bomber jackets are ready for shipping! ✨", "Oct 08", false)
+            )
+        )
+    )
+
+    val notifications = listOf(
+        Notification(
+            id = "n1",
+            user = users[1],
+            content = "loved your post.",
+            timeAgo = "10m ago",
+            type = NotificationType.REACTION,
+            rawType = "reaction",
+            reactionType = "love",
+            entityType = "post",
+            previewText = "Proud to announce the new mobile experience for Feathered!",
+            previewImage = "https://images.unsplash.com/photo-1518770660439-4636190af475?w=300",
+            isRead = false,
+            timestamp = System.currentTimeMillis() - 10 * 60 * 1000
+        ),
+        Notification(
+            id = "n2",
+            user = users[2],
+            content = "invited you to join the group \"Kilimanjaro Hikers Club\".",
+            timeAgo = "25m ago",
+            type = NotificationType.GROUP_INVITE,
+            rawType = "group_invite",
+            entityType = "group_invite",
+            groupId = 501L,
+            groupName = "Kilimanjaro Hikers Club",
+            inviteId = 1001L,
+            isRead = false,
+            timestamp = System.currentTimeMillis() - 25 * 60 * 1000
+        ),
+        Notification(
+            id = "n3",
+            user = users[3],
+            content = "commented on your photo.",
+            timeAgo = "1h ago",
+            type = NotificationType.COMMENT,
+            rawType = "comment",
+            entityType = "post",
+            previewText = "Stunning view! Where was this shot taken?",
+            previewImage = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300",
+            isRead = false,
+            timestamp = System.currentTimeMillis() - 60 * 60 * 1000
+        ),
+        Notification(
+            id = "n4",
+            user = users[4],
+            content = "started following you.",
+            timeAgo = "3h ago",
+            type = NotificationType.FOLLOW,
+            rawType = "follow",
+            entityType = "profile",
+            isRead = true,
+            timestamp = System.currentTimeMillis() - 3 * 3600 * 1000
+        ),
+        Notification(
+            id = "n5",
+            user = users[5],
+            content = "invited you to the event \"Zanzibar Sunset Acoustic Sessions\".",
+            timeAgo = "5h ago",
+            type = NotificationType.EVENT,
+            rawType = "event",
+            entityType = "event",
+            entityId = 1L,
+            previewText = "Live acoustic performances by the ocean.",
+            previewImage = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300",
+            isRead = true,
+            timestamp = System.currentTimeMillis() - 5 * 3600 * 1000
+        ),
+        Notification(
+            id = "n6",
+            user = users[1],
+            content = "and 2 others reacted to your reel.",
+            timeAgo = "Yesterday",
+            type = NotificationType.REACTION,
+            rawType = "reaction",
+            reactionType = "fire",
+            entityType = "reel",
+            actorsCount = 3,
+            actors = listOf(users[1], users[2], users[3]),
+            previewText = "Sunset drive through Ngorongoro 🌅",
+            isRead = true,
+            timestamp = System.currentTimeMillis() - 26 * 3600 * 1000
+        ),
+        Notification(
+            id = "n7",
+            user = users[1],
+            content = "has a birthday today! Wish them a happy birthday.",
+            timeAgo = "Yesterday",
+            type = NotificationType.BIRTHDAY,
+            rawType = "birthday",
+            entityType = "profile",
+            isRead = true,
+            timestamp = System.currentTimeMillis() - 30 * 3600 * 1000
+        ),
+        Notification(
+            id = "n8",
+            user = users[2],
+            content = "shared your story.",
+            timeAgo = "2 days ago",
+            type = NotificationType.SHARE,
+            rawType = "share",
+            entityType = "story",
+            isRead = true,
+            timestamp = System.currentTimeMillis() - 48 * 3600 * 1000
+        ),
+        Notification(
+            id = "n9",
+            user = users[3],
+            content = "mentioned you in a comment.",
+            timeAgo = "3 days ago",
+            type = NotificationType.MENTION,
+            rawType = "mention",
+            entityType = "comment",
+            previewText = "@jastin_jovian check out this amazing event!",
+            isRead = true,
+            timestamp = System.currentTimeMillis() - 72 * 3600 * 1000
+        ),
+        Notification(
+            id = "n10",
+            user = users[4],
+            content = "played your track \"Afro Beats Mix 2026\".",
+            timeAgo = "4 days ago",
+            type = NotificationType.MUSIC,
+            rawType = "song",
+            entityType = "song",
+            previewText = "Afro Beats Mix 2026 (Live in Dar)",
+            isRead = true,
+            timestamp = System.currentTimeMillis() - 96 * 3600 * 1000
+        )
+    )
+
+    val songs = listOf(
+        Song(
+            id = "1",
+            title = "Lonely At The Top",
+            artist = "Asake",
+            cover = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600",
+            audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+            duration = "3:24",
+            durationSeconds = 204,
+            uploaderId = 2,
+            genre = "Afrobeats",
+            album = "Work of Art",
+            isVerified = true,
+            stats = SongStats(plays = 1450000, likes = 245000, shares = 48000, downloads = 89000, reelsUse = 12000)
+        ),
+        Song(
+            id = "2",
+            title = "City Boys",
+            artist = "Burna Boy",
+            cover = "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600",
+            audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+            duration = "2:48",
+            durationSeconds = 168,
+            uploaderId = 3,
+            genre = "Afrobeats",
+            album = "I Told Them...",
+            isVerified = true,
+            stats = SongStats(plays = 2100000, likes = 320000, shares = 72000, downloads = 135000, reelsUse = 24000)
+        ),
+        Song(
+            id = "3",
+            title = "Mnike",
+            artist = "Tyler ICU & Tumelo.za",
+            cover = "https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=600",
+            audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+            duration = "4:12",
+            durationSeconds = 252,
+            uploaderId = 4,
+            genre = "Amapiano",
+            album = "Single",
+            isVerified = true,
+            stats = SongStats(plays = 2540000, likes = 412000, shares = 95000, downloads = 190000, reelsUse = 38000)
+        ),
+        Song(
+            id = "4",
+            title = "Calm Down",
+            artist = "Rema",
+            cover = "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600",
+            audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+            duration = "3:39",
+            durationSeconds = 219,
+            uploaderId = 5,
+            genre = "Afrobeats",
+            album = "Rave & Roses",
+            isVerified = true,
+            stats = SongStats(plays = 3850000, likes = 580000, shares = 142000, downloads = 280000, reelsUse = 56000)
+        ),
+        Song(
+            id = "5",
+            title = "Sawa Sawa",
+            artist = "Alikiba",
+            cover = "https://images.unsplash.com/photo-1487180144351-b8472da7d491?w=600",
+            audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+            duration = "3:15",
+            durationSeconds = 195,
+            uploaderId = 6,
+            genre = "Bongo Fleva",
+            album = "Only One King",
+            isVerified = true,
+            stats = SongStats(plays = 890000, likes = 125000, shares = 28000, downloads = 45000, reelsUse = 8900)
+        ),
+        Song(
+            id = "6",
+            title = "Water",
+            artist = "Tyla",
+            cover = "https://images.unsplash.com/photo-1511735111819-9a3f7709049c?w=600",
+            audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
+            duration = "3:20",
+            durationSeconds = 200,
+            uploaderId = 2,
+            genre = "Amapiano",
+            album = "Tyla",
+            isVerified = true,
+            stats = SongStats(plays = 3200000, likes = 605000, shares = 180000, downloads = 295000, reelsUse = 82000)
+        ),
+        Song(
+            id = "7",
+            title = "Komasava",
+            artist = "Diamond Platnumz",
+            cover = "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600",
+            audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
+            duration = "3:02",
+            durationSeconds = 182,
+            uploaderId = 4,
+            genre = "Bongo Fleva",
+            album = "Single",
+            isVerified = true,
+            stats = SongStats(plays = 950000, likes = 182000, shares = 39000, downloads = 61000, reelsUse = 14500)
+        ),
+        Song(
+            id = "8",
+            title = "Tshwala Bam",
+            artist = "TitoM & Yuppe",
+            cover = "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600",
+            audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+            duration = "3:44",
+            durationSeconds = 224,
+            uploaderId = 5,
+            genre = "Amapiano",
+            album = "Single",
+            isVerified = false,
+            stats = SongStats(plays = 2710000, likes = 495000, shares = 115000, downloads = 210000, reelsUse = 67000)
+        ),
+        Song(
+            id = "9",
+            title = "Nalifurahia",
+            artist = "Zabron Singers",
+            cover = "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=600",
+            audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3",
+            duration = "4:32",
+            durationSeconds = 272,
+            uploaderId = 6,
+            genre = "Gospel",
+            album = "Mkono wa Bwana",
+            isVerified = true,
+            stats = SongStats(plays = 1120000, likes = 195000, shares = 34000, downloads = 54000, reelsUse = 9200)
+        ),
+        Song(
+            id = "10",
+            title = "Mapoz",
+            artist = "Diamond Platnumz ft. Jay Melody",
+            cover = "https://images.unsplash.com/photo-1445985543469-433ecba627a0?w=600",
+            audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3",
+            duration = "3:11",
+            durationSeconds = 191,
+            uploaderId = 4,
+            genre = "Bongo Fleva",
+            album = "Single",
+            isVerified = true,
+            stats = SongStats(plays = 830000, likes = 142000, shares = 29000, downloads = 48000, reelsUse = 11800)
+        ),
+        Song(
+            id = "11",
+            title = "Afro Beats Mix 2026",
+            artist = "Jastin Jovian",
+            cover = "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600",
+            audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3",
+            duration = "3:58",
+            durationSeconds = 238,
+            uploaderId = 1,
+            genre = "Afrobeats",
+            album = "Dar Night Sessions",
+            isVerified = true,
+            stats = SongStats(plays = 18900, likes = 3420, shares = 850, downloads = 1200, reelsUse = 420)
+        ),
+        Song(
+            id = "12",
+            title = "Sunset in Serengeti",
+            artist = "Jastin Jovian",
+            cover = "https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=600",
+            audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3",
+            duration = "3:30",
+            durationSeconds = 210,
+            uploaderId = 1,
+            genre = "RnB",
+            album = "Dar Night Sessions",
+            isVerified = true,
+            stats = SongStats(plays = 5990, likes = 1120, shares = 320, downloads = 540, reelsUse = 190)
+        ),
+        Song(
+            id = "13",
+            title = "Bongo Rhythm Vol. 1",
+            artist = "Jastin Jovian",
+            cover = "https://images.unsplash.com/photo-1520523839898-507128254c12?w=600",
+            audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3",
+            duration = "2:54",
+            durationSeconds = 174,
+            uploaderId = 1,
+            genre = "Bongo Fleva",
+            album = "Single",
+            isVerified = true,
+            stats = SongStats(plays = 8400, likes = 1650, shares = 460, downloads = 780, reelsUse = 260)
+        ),
+        Song(
+            id = "14",
+            title = "Breathe Deep",
+            artist = "Amina Said",
+            cover = "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600",
+            audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3",
+            duration = "3:42",
+            durationSeconds = 222,
+            uploaderId = 2,
+            genre = "RnB",
+            album = "Soul Essence",
+            isVerified = false,
+            stats = SongStats(plays = 42000, likes = 8900, shares = 1800, downloads = 3100, reelsUse = 780)
+        ),
+        Song(
+            id = "15",
+            title = "Zanzibar Breeze",
+            artist = "Adebayo Bakari",
+            cover = "https://images.unsplash.com/photo-1526478806334-5fd488fcaabc?w=600",
+            audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3",
+            duration = "3:10",
+            durationSeconds = 190,
+            uploaderId = 3,
+            genre = "Hip Hop",
+            album = "Coastline",
+            isVerified = false,
+            stats = SongStats(plays = 78000, likes = 14300, shares = 2900, downloads = 5400, reelsUse = 1100)
+        )
+    )
+
+    val initialSongComments = listOf(
+        SongComment(
+            id = 1L,
+            songId = "1",
+            userId = 2L,
+            userName = "Amina Said",
+            userAvatar = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+            text = "This track is on continuous repeat! Production on this is top-notch 🔥",
+            createdAt = System.currentTimeMillis() - 3600 * 1000 * 2,
+            likesCount = 24
+        ),
+        SongComment(
+            id = 2L,
+            songId = "1",
+            userId = 3L,
+            userName = "Adebayo Bakari",
+            userAvatar = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+            text = "The bassline and vocal dynamics are crazy. Pure genius! 👏",
+            createdAt = System.currentTimeMillis() - 3600 * 1000 * 5,
+            likesCount = 18
+        ),
+        SongComment(
+            id = 3L,
+            songId = "2",
+            userId = 4L,
+            userName = "Fatima Mwangi",
+            userAvatar = "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150",
+            text = "City Boys anthem all summer long! Loving the vibe 🌟",
+            createdAt = System.currentTimeMillis() - 3600 * 1000 * 8,
+            likesCount = 42
+        )
+    )
+
+    val groups = listOf(
+        Group(
+            id = 1L,
+            adminId = 101L,
+            name = "East Africa Tech & Creators",
+            description = "Community of software developers, product builders, AI innovators, and tech entrepreneurs across East Africa. Discussions, showcases, tech meetups, and collaboration.",
+            coverImageUrl = "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1500&q=80",
+            profileImageUrl = "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=400&q=80",
+            membersCount = 3840,
+            isMember = true,
+            isPrivate = false,
+            category = "general",
+            memberPostingAllowed = true,
+            members = listOf(101L, 102L, 103L, 104L)
+        ),
+        Group(
+            id = 2L,
+            adminId = 102L,
+            name = "Tanzania Careers & Tech Hiring",
+            description = "Connecting top tech talent, developers, marketers, designers, and managers with high-growth companies, startups, and remote teams worldwide.",
+            coverImageUrl = "https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1500&q=80",
+            profileImageUrl = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+            membersCount = 6120,
+            isMember = true,
+            isPrivate = false,
+            category = "recruitment",
+            memberPostingAllowed = true,
+            members = listOf(101L, 102L, 105L)
+        ),
+        Group(
+            id = 3L,
+            adminId = 103L,
+            name = "Dar es Salaam Gadgets Buy & Sell",
+            description = "Verified community marketplace for buying, selling, and trading authentic smartphones, cameras, laptops, audio gear, and gaming equipment in Dar.",
+            coverImageUrl = "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1500&q=80",
+            profileImageUrl = "https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=400&q=80",
+            membersCount = 12450,
+            isMember = true,
+            isPrivate = false,
+            category = "buy_sell",
+            memberPostingAllowed = true,
+            members = listOf(101L, 103L, 104L)
+        ),
+        Group(
+            id = 4L,
+            adminId = 104L,
+            name = "Creative Designers & Photographers Africa",
+            description = "A thriving hub for photographers, UI/UX designers, 3D artists, and visual storytellers. Critique, tutorials, resource shares, and gallery highlights.",
+            coverImageUrl = "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1500&q=80",
+            profileImageUrl = "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=400&q=80",
+            membersCount = 4720,
+            isMember = false,
+            isPrivate = false,
+            category = "general",
+            memberPostingAllowed = true,
+            members = listOf(102L, 104L)
+        ),
+        Group(
+            id = 5L,
+            adminId = 105L,
+            name = "Zanzibar Tourism, Events & Excursions",
+            description = "Private society for beach club organizers, event planners, hospitality curators, and adventure lovers exploring the spices and islands of Zanzibar.",
+            coverImageUrl = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1500&q=80",
+            profileImageUrl = "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=400&q=80",
+            membersCount = 2890,
+            isMember = false,
+            isPrivate = true,
+            category = "general",
+            memberPostingAllowed = false,
+            members = listOf(103L, 105L)
+        )
+    )
+
+    val groupPosts = listOf(
+        GroupPost(
+            id = 101L,
+            groupId = 1L,
+            author = currentUser,
+            content = "Excited to share our newest architectural updates for modern social applications on Android with Compose & Kotlin! What libraries are you all using for background audio and real-time feeds?",
+            imageUrls = listOf("https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1200&q=80"),
+            createdAt = "2h ago",
+            likesCount = 42,
+            commentsCount = 7,
+            sharesCount = 3,
+            isLiked = true,
+            myReaction = "like"
+        ),
+        GroupPost(
+            id = 102L,
+            groupId = 2L,
+            author = users[1], // Amina Mwangi
+            content = "We are hiring! Looking for a Senior Jetpack Compose Engineer to join our core product team. Competitive compensation and remote flexibility available across East Africa.",
+            jobTitle = "Senior Jetpack Compose Engineer",
+            company = "NexaTech Africa",
+            jobType = "Full-time",
+            salary = "$3,500 - $5,000 / month",
+            location = "Dar es Salaam / Remote",
+            applicationType = "email",
+            applicationValue = "careers@nexatech.africa",
+            createdAt = "4h ago",
+            likesCount = 89,
+            commentsCount = 14,
+            sharesCount = 19,
+            isLiked = false
+        ),
+        GroupPost(
+            id = 103L,
+            groupId = 3L,
+            author = users[2], // David Kimaro
+            content = "Selling MacBook Pro 16\" M3 Max with 36GB Unified Memory and 1TB SSD. Pristine condition with original box, AppleCare+ active until December 2026. Battery health 98%. Pickup in Masaki or CBD.",
+            imageUrls = listOf(
+                "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=80",
+                "https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?auto=format&fit=crop&w=1200&q=80"
+            ),
+            price = 2850.0,
+            currency = "USD",
+            condition = "Like New",
+            location = "Masaki, Dar es Salaam",
+            status = "available",
+            createdAt = "6h ago",
+            likesCount = 28,
+            commentsCount = 9,
+            sharesCount = 5,
+            isLiked = false
+        )
+    )
+
+    val groupInvites = listOf(
+        GroupInvite(
+            id = 1L,
+            groupId = 4L,
+            group = groups[3],
+            inviter = users[3], // Zahara Hassan
+            inviteeId = 101L,
+            createdAt = "Yesterday"
+        )
+    )
+}
