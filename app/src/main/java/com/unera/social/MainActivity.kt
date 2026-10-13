@@ -19,7 +19,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.unera.social.data.MockData
-import com.unera.social.model.Screen
+import com.unera.social.model.*
 import com.unera.social.ui.FeatheredViewModel
 import com.unera.social.ui.components.FeatheredBottomNav
 import com.unera.social.ui.components.FeatheredTopBar
@@ -508,6 +508,7 @@ fun FeatheredApp(
                     )
                 }
                 Screen.GROUPS -> {
+                    val activeGid = uiState.activeGroupId
                     GroupsScreen(
                         currentUser = uiState.currentUser,
                         groups = uiState.groups,
@@ -515,8 +516,14 @@ fun FeatheredApp(
                         groupInvites = uiState.groupInvites,
                         allEvents = uiState.events,
                         allUsers = uiState.users,
-                        initialGroupId = uiState.activeGroupId,
+                        initialGroupId = activeGid,
+                        groupSuggestions = uiState.groupSuggestions,
+                        groupMembers = if (activeGid != null) uiState.groupMembers[activeGid] ?: emptyList() else emptyList(),
+                        groupEvents = if (activeGid != null) uiState.groupEvents[activeGid] ?: emptyList() else emptyList(),
+                        isGroupsLoading = uiState.isGroupsLoading,
+                        isGroupPostsLoading = uiState.isGroupPostsLoading,
                         onBack = { viewModel.setScreen(Screen.FEED) },
+                        onSelectGroup = { gid -> viewModel.setActiveGroupId(gid) },
                         onCreateGroup = { name, desc, type, cat, prof, cov ->
                             viewModel.createGroup(name, desc, type, cat, prof, cov)
                         },
@@ -541,7 +548,28 @@ fun FeatheredApp(
                         onRemoveMember = { gid, uid -> viewModel.removeGroupMember(gid, uid) },
                         onProfileClick = { userId ->
                             val target = uiState.users.find { it.id == userId }
-                            if (target != null) viewModel.openUserProfile(target)
+                            if (target != null) {
+                                viewModel.openUserProfile(target)
+                            } else {
+                                val member = uiState.groupMembers.values.flatten().find { it.userId == userId }
+                                val fallbackUser = if (member != null) {
+                                    User(
+                                        id = member.userId,
+                                        name = member.name.ifBlank { "User ${member.userId}" },
+                                        username = member.username.ifBlank { "user${member.userId}" },
+                                        profileImageUrl = member.profileImageUrl.ifBlank { "https://ui-avatars.com/api/?name=${member.name}" },
+                                        isVerified = member.isVerified
+                                    )
+                                } else {
+                                    User(
+                                        id = userId,
+                                        name = "User $userId",
+                                        username = "user$userId",
+                                        profileImageUrl = "https://ui-avatars.com/api/?name=User+$userId"
+                                    )
+                                }
+                                viewModel.openUserProfile(fallbackUser)
+                            }
                         },
                         modifier = screenModifier
                     )

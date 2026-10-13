@@ -6,6 +6,7 @@ import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
+import com.unera.social.data.GroupMemberInfo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -58,7 +59,13 @@ fun GroupsScreen(
     allEvents: List<Event>,
     allUsers: List<User>,
     initialGroupId: Long? = null,
+    groupSuggestions: List<Group> = emptyList(),
+    groupMembers: List<GroupMemberInfo> = emptyList(),
+    groupEvents: List<Event> = emptyList(),
+    isGroupsLoading: Boolean = false,
+    isGroupPostsLoading: Boolean = false,
     onBack: () -> Unit,
+    onSelectGroup: (Long?) -> Unit = {},
     onCreateGroup: (name: String, desc: String, type: String, category: String, profile: String, cover: String) -> Unit,
     onJoinGroup: (Long) -> Unit,
     onLeaveGroup: (Long) -> Unit,
@@ -84,6 +91,10 @@ fun GroupsScreen(
     var sortMode by remember { mutableStateOf("Most visited") }
     var showSortDialog by remember { mutableStateOf(false) }
 
+    LaunchedEffect(activeGroupId) {
+        onSelectGroup(activeGroupId)
+    }
+
     // Modals
     var showCategoryDialog by remember { mutableStateOf(false) }
     var showCreateGroupDialog by remember { mutableStateOf(false) }
@@ -101,12 +112,15 @@ fun GroupsScreen(
     }
 
     if (activeGroup != null) {
+        val effectiveEvents = if (groupEvents.isNotEmpty()) groupEvents else allEvents.filter { it.groupId == activeGroup.id }
         GroupDetailScreen(
             group = activeGroup,
             currentUser = currentUser,
             allPosts = groupPosts.filter { it.groupId == activeGroup.id },
-            allEvents = allEvents.filter { it.groupId == activeGroup.id },
+            allEvents = effectiveEvents,
             allUsers = allUsers,
+            groupMembersInfo = groupMembers,
+            isPostsLoading = isGroupPostsLoading,
             onBack = { activeGroupId = null },
             onJoinGroup = { onJoinGroup(activeGroup.id) },
             onLeaveGroup = { onLeaveGroup(activeGroup.id) },
@@ -325,18 +339,22 @@ fun GroupsScreen(
                                             .padding(vertical = 48.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Icon(Icons.Default.Groups, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(56.dp))
-                                            Spacer(modifier = Modifier.height(12.dp))
-                                            Text("No groups yet", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                            Text("Create your first group or discover active ones!", color = Color(0xFF94A3B8), fontSize = 13.sp)
-                                            Spacer(modifier = Modifier.height(16.dp))
-                                            Button(
-                                                onClick = { showCategoryDialog = true },
-                                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1877F2)),
-                                                shape = RoundedCornerShape(12.dp)
-                                            ) {
-                                                Text("Create Group")
+                                        if (isGroupsLoading) {
+                                            CircularProgressIndicator(color = Color(0xFF1877F2))
+                                        } else {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Icon(Icons.Default.Groups, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(56.dp))
+                                                Spacer(modifier = Modifier.height(12.dp))
+                                                Text("No groups yet", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                                Text("Create your first group or discover active ones!", color = Color(0xFF94A3B8), fontSize = 13.sp)
+                                                Spacer(modifier = Modifier.height(16.dp))
+                                                Button(
+                                                    onClick = { showCategoryDialog = true },
+                                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1877F2)),
+                                                    shape = RoundedCornerShape(12.dp)
+                                                ) {
+                                                    Text("Create Group")
+                                                }
                                             }
                                         }
                                     }
@@ -346,13 +364,16 @@ fun GroupsScreen(
                     }
 
                     GroupsTab.DISCOVER -> {
-                        val discoverGroups = groups.filter { group ->
+                        val unjoinedFromGroups = groups.filter { group ->
                             val isOwner = group.adminId == currentUser.id
                             val isMem = group.isMember || group.members.contains(currentUser.id)
                             !isOwner && !isMem
-                        }.filter {
-                            searchQuery.isBlank() || it.name.contains(searchQuery, ignoreCase = true) || it.description.contains(searchQuery, ignoreCase = true)
                         }
+                        val combinedSuggestions = (groupSuggestions + unjoinedFromGroups)
+                            .distinctBy { it.id }
+                            .filter {
+                                searchQuery.isBlank() || it.name.contains(searchQuery, ignoreCase = true) || it.description.contains(searchQuery, ignoreCase = true)
+                            }
 
                         LazyColumn(
                             modifier = Modifier
@@ -362,7 +383,7 @@ fun GroupsScreen(
                         ) {
                             item {
                                 Text(
-                                    text = "Discover Groups (${discoverGroups.size})",
+                                    text = "Discover Groups (${combinedSuggestions.size})",
                                     color = Color.White,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.ExtraBold,
@@ -370,16 +391,7 @@ fun GroupsScreen(
                                 )
                             }
 
-                            items(discoverGroups) { group ->
-                                GroupListItem(
-                                    group = group,
-                                    onClick = { activeGroupId = group.id },
-                                    showJoinButton = true,
-                                    onJoinClick = { onJoinGroup(group.id) }
-                                )
-                            }
-
-                            if (discoverGroups.isEmpty()) {
+                            if (isGroupsLoading && combinedSuggestions.isEmpty()) {
                                 item {
                                     Box(
                                         modifier = Modifier
@@ -387,7 +399,29 @@ fun GroupsScreen(
                                             .padding(vertical = 48.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Text("No more groups to discover right now", color = Color(0xFF94A3B8), fontSize = 14.sp)
+                                        CircularProgressIndicator(color = Color(0xFF1877F2))
+                                    }
+                                }
+                            } else {
+                                items(combinedSuggestions) { group ->
+                                    GroupListItem(
+                                        group = group,
+                                        onClick = { activeGroupId = group.id },
+                                        showJoinButton = true,
+                                        onJoinClick = { onJoinGroup(group.id) }
+                                    )
+                                }
+
+                                if (combinedSuggestions.isEmpty()) {
+                                    item {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 48.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text("No more groups to discover right now", color = Color(0xFF94A3B8), fontSize = 14.sp)
+                                        }
                                     }
                                 }
                             }
@@ -634,6 +668,8 @@ fun GroupDetailScreen(
     allPosts: List<GroupPost>,
     allEvents: List<Event>,
     allUsers: List<User>,
+    groupMembersInfo: List<GroupMemberInfo> = emptyList(),
+    isPostsLoading: Boolean = false,
     onBack: () -> Unit,
     onJoinGroup: () -> Unit,
     onLeaveGroup: () -> Unit,
@@ -912,7 +948,11 @@ fun GroupDetailScreen(
                                 .padding(vertical = 48.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("No discussions yet. Be the first to start a conversation!", color = Color(0xFF94A3B8), fontSize = 14.sp)
+                            if (isPostsLoading) {
+                                CircularProgressIndicator(color = Color(0xFF1877F2))
+                            } else {
+                                Text("No discussions yet. Be the first to start a conversation!", color = Color(0xFF94A3B8), fontSize = 14.sp)
+                            }
                         }
                     }
                 }
@@ -951,44 +991,152 @@ fun GroupDetailScreen(
             }
 
             GroupDetailTab.MEMBERS -> {
-                val memberIds = (group.members + group.adminId).distinct()
-                val groupUsers = allUsers.filter { memberIds.contains(it.id) }
+                if (groupMembersInfo.isNotEmpty()) {
+                    items(groupMembersInfo) { member ->
+                        val userIsAdmin = member.role.equals("admin", ignoreCase = true) || member.userId == group.adminId
+                        val userIsMod = member.role.equals("moderator", ignoreCase = true)
+                        var showActionMenu by remember { mutableStateOf(false) }
 
-                items(groupUsers) { user ->
-                    val userIsOwner = user.id == group.adminId
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFF0F172A))
-                            .clickable { onProfileClick(user.id) }
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        AsyncImage(
-                            model = user.profileImageUrl,
-                            contentDescription = null,
+                        Row(
                             modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(user.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                if (userIsOwner) {
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Admin (Owner)", color = Color(0xFF1877F2), fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 6.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFF0F172A))
+                                .clickable { onProfileClick(member.userId) }
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            AsyncImage(
+                                model = member.profileImageUrl.ifBlank { "https://ui-avatars.com/api/?name=${member.name}" },
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(member.name.ifBlank { "Member" }, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    if (member.isVerified) {
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        VerifiedBadge(size = 14.dp)
+                                    }
+                                    if (userIsAdmin) {
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Admin", color = Color(0xFF1877F2), fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
+                                    } else if (userIsMod) {
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Moderator", color = Color(0xFF45BD62), fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
+                                    }
+                                }
+                                Text("@${member.username}", color = Color(0xFF94A3B8), fontSize = 12.sp)
+                                if (member.postingDisabled) {
+                                    Text("Posting muted", color = Color(0xFFF3425F), fontSize = 11.sp)
                                 }
                             }
-                            Text("@${user.username}", color = Color(0xFF94A3B8), fontSize = 12.sp)
-                        }
 
-                        if (isOwner && !userIsOwner) {
-                            IconButton(onClick = { onRemoveMember(user.id) }) {
-                                Icon(Icons.Default.RemoveCircleOutline, contentDescription = "Remove", tint = Color(0xFFF3425F))
+                            if (isOwner && member.userId != currentUser.id) {
+                                Box {
+                                    IconButton(onClick = { showActionMenu = true }) {
+                                        Icon(Icons.Default.MoreVert, contentDescription = "Manage", tint = Color(0xFF94A3B8))
+                                    }
+                                    DropdownMenu(
+                                        expanded = showActionMenu,
+                                        onDismissRequest = { showActionMenu = false },
+                                        modifier = Modifier.background(Color(0xFF1E293B))
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    if (member.postingDisabled) "Enable Posting" else "Mute Posting",
+                                                    color = Color.White
+                                                )
+                                            },
+                                            onClick = {
+                                                onToggleMemberPosting(member.userId, !member.postingDisabled)
+                                                showActionMenu = false
+                                            }
+                                        )
+                                        if (userIsAdmin) {
+                                            DropdownMenuItem(
+                                                text = { Text("Demote from Admin", color = Color.White) },
+                                                onClick = {
+                                                    onSetMemberRole(member.userId, "remove-admin")
+                                                    showActionMenu = false
+                                                }
+                                            )
+                                        } else {
+                                            DropdownMenuItem(
+                                                text = { Text("Promote to Admin", color = Color.White) },
+                                                onClick = {
+                                                    onSetMemberRole(member.userId, "make-admin")
+                                                    showActionMenu = false
+                                                }
+                                            )
+                                        }
+                                        if (!userIsMod) {
+                                            DropdownMenuItem(
+                                                text = { Text("Promote to Moderator", color = Color.White) },
+                                                onClick = {
+                                                    onSetMemberRole(member.userId, "make-moderator")
+                                                    showActionMenu = false
+                                                }
+                                            )
+                                        }
+                                        DropdownMenuItem(
+                                            text = { Text("Remove from Group", color = Color(0xFFF3425F)) },
+                                            onClick = {
+                                                onRemoveMember(member.userId)
+                                                showActionMenu = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    val memberIds = (group.members + group.adminId).distinct()
+                    val groupUsers = allUsers.filter { memberIds.contains(it.id) }
+
+                    items(groupUsers) { user ->
+                        val userIsOwner = user.id == group.adminId
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFF0F172A))
+                                .clickable { onProfileClick(user.id) }
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            AsyncImage(
+                                model = user.profileImageUrl,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(user.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                    if (userIsOwner) {
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Admin (Owner)", color = Color(0xFF1877F2), fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
+                                    }
+                                }
+                                Text("@${user.username}", color = Color(0xFF94A3B8), fontSize = 12.sp)
+                            }
+
+                            if (isOwner && !userIsOwner) {
+                                IconButton(onClick = { onRemoveMember(user.id) }) {
+                                    Icon(Icons.Default.RemoveCircleOutline, contentDescription = "Remove", tint = Color(0xFFF3425F))
+                                }
                             }
                         }
                     }

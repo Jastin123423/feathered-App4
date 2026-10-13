@@ -2,11 +2,15 @@ package com.unera.social.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.unera.social.data.GroupsApiService
+import com.unera.social.data.GroupMemberInfo
 import com.unera.social.data.MarketplaceApiService
 import com.unera.social.data.MockData
 import com.unera.social.data.PostsApiService
+import com.unera.social.data.StoriesApiService
 import com.unera.social.model.*
 import com.unera.social.ui.components.PostUploadState
+import org.json.JSONObject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +27,14 @@ data class FeatheredUiState(
     val isFeedLoading: Boolean = false,
     val userProfilePosts: Map<Long, List<Post>> = emptyMap(),
     val isProfilePostsLoading: Boolean = false,
-    val stories: List<Story> = MockData.stories,
+    val stories: List<Story> = emptyList(),
+    val isStoriesLoading: Boolean = false,
+    val storyViewers: Map<Long, List<StoryViewer>> = emptyMap(),
+    val isStoryViewersLoading: Boolean = false,
+    val storyComments: Map<Long, List<StoryComment>> = emptyMap(),
+    val isStoryCommentsLoading: Boolean = false,
+    val storyReactions: Map<Long, StoryReactionsData> = emptyMap(),
+    val storyAnalytics: Map<Long, StoryAnalytics> = emptyMap(),
     val reels: List<Reel> = MockData.reels,
     val products: List<Product> = MockData.products,
     val isProductsLoading: Boolean = false,
@@ -72,9 +83,14 @@ data class FeatheredUiState(
     val songUploadProgress: Int? = null,
     val songUploadStatus: String? = null,
     // Groups state
-    val groups: List<Group> = MockData.groups,
-    val groupPosts: List<GroupPost> = MockData.groupPosts,
-    val groupInvites: List<GroupInvite> = MockData.groupInvites,
+    val groups: List<Group> = emptyList(),
+    val groupPosts: List<GroupPost> = emptyList(),
+    val groupInvites: List<GroupInvite> = emptyList(),
+    val groupSuggestions: List<Group> = emptyList(),
+    val groupMembers: Map<Long, List<GroupMemberInfo>> = emptyMap(),
+    val groupEvents: Map<Long, List<Event>> = emptyMap(),
+    val isGroupsLoading: Boolean = false,
+    val isGroupPostsLoading: Boolean = false,
     val activeGroupId: Long? = null,
     val groupMembersOverrides: Map<Long, Map<Long, String>> = emptyMap(), // groupId -> (userId -> role)
     val groupPostingDisabledOverrides: Map<Long, Set<Long>> = emptyMap(), // groupId -> Set<userId>
@@ -168,6 +184,8 @@ class FeatheredViewModel : ViewModel() {
     init {
         refreshLiveProducts()
         refreshFeed()
+        refreshGroups()
+        refreshStories()
     }
 
     fun refreshFeed() {
@@ -235,9 +253,12 @@ class FeatheredViewModel : ViewModel() {
             refreshLiveProducts()
         } else if (screen == Screen.FEED) {
             refreshFeed()
+            refreshStories()
         } else if (screen == Screen.PROFILE) {
             val uid = _uiState.value.selectedUserProfile?.id ?: _uiState.value.currentUser.id
             fetchUserProfilePosts(uid)
+        } else if (screen == Screen.GROUPS) {
+            refreshGroups()
         }
     }
 
@@ -1007,8 +1028,46 @@ class FeatheredViewModel : ViewModel() {
         _uiState.update { it.copy(isAppLoading = loading) }
     }
 
+    fun refreshStories() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isStoriesLoading = true) }
+            val viewerId = _uiState.value.currentUser.id
+            val liveStories = StoriesApiService.fetchStories(viewerId)
+            _uiState.update { it.copy(stories = liveStories, isStoriesLoading = false) }
+        }
+    }
+
     fun setSelectedStory(story: Story?) {
         _uiState.update { it.copy(selectedStory = story) }
+        if (story != null) {
+            val viewerId = _uiState.value.currentUser.id
+            viewModelScope.launch {
+                // 1. Record view
+                StoriesApiService.recordView(story.id, viewerId)
+                // 2. Fetch reactions
+                val reactionsData = StoriesApiService.fetchReactions(story.id, viewerId)
+                if (reactionsData != null) {
+                    _uiState.update { state ->
+                        state.copy(storyReactions = state.storyReactions + (story.id to reactionsData))
+                    }
+                }
+                // 3. Fetch comments
+                val comments = StoriesApiService.fetchComments(story.id, viewerId)
+                _uiState.update { state ->
+                    state.copy(storyComments = state.storyComments + (story.id to comments))
+                }
+                // 4. If owner, fetch viewers and analytics
+                if (story.author.id == viewerId) {
+                    val viewers = StoriesApiService.fetchViewers(story.id)
+                    val analytics = StoriesApiService.fetchAnalytics(story.id)
+                    _uiState.update { state ->
+                        val updatedViewers = state.storyViewers + (story.id to viewers)
+                        val updatedAnalytics = if (analytics != null) state.storyAnalytics + (story.id to analytics) else state.storyAnalytics
+                        state.copy(storyViewers = updatedViewers, storyAnalytics = updatedAnalytics)
+                    }
+                }
+            }
+        }
     }
 
     fun setShowCreateStoryDialog(show: Boolean) {
@@ -1020,64 +1079,176 @@ class FeatheredViewModel : ViewModel() {
         type: String = "image",
         textContent: String = "",
         backgroundStyle: String = "linear-gradient(45deg, #1877F2, #0055FF)",
-        musicTitle: String? = null
+        musicTitle: String? = null,
+        musicUrl: String? = null,
+        duration: Int = 90
     ) {
-        val newStory = Story(
-            id = System.currentTimeMillis(),
-            author = _uiState.value.currentUser,
-            mediaUrl = mediaUrl,
-            timestamp = "Just now",
-            isViewed = false,
-            type = type,
-            textContent = textContent,
-            backgroundStyle = backgroundStyle,
-            musicTitle = musicTitle,
-            viewsCount = 1,
-            reactionsCount = 0,
-            commentsCount = 0,
-            sharesCount = 0
-        )
-        _uiState.update { state ->
-            state.copy(
-                stories = listOf(newStory) + state.stories,
-                showCreateStoryDialog = false
+        val currentUserId = _uiState.value.currentUser.id
+        viewModelScope.launch {
+            _uiState.update { it.copy(isStoriesLoading = true, showCreateStoryDialog = false) }
+            val mediaUrls = if (mediaUrl.isNotBlank()) listOf(mediaUrl) else emptyList()
+            val created = StoriesApiService.createStory(
+                userId = currentUserId,
+                type = type,
+                textContent = textContent.takeIf { it.isNotBlank() },
+                mediaUrl = mediaUrl.takeIf { it.isNotBlank() },
+                mediaUrls = mediaUrls,
+                backgroundStyle = backgroundStyle.takeIf { it.isNotBlank() },
+                musicUrl = musicUrl,
+                musicTitle = musicTitle,
+                duration = duration
             )
+            if (created != null) {
+                _uiState.update { state ->
+                    state.copy(
+                        stories = listOf(created) + state.stories.filter { it.id != created.id },
+                        isStoriesLoading = false
+                    )
+                }
+            } else {
+                refreshStories()
+            }
         }
     }
 
     fun deleteStory(storyId: Long) {
-        _uiState.update { state ->
-            val updated = state.stories.filter { it.id != storyId }
-            state.copy(
-                stories = updated,
-                selectedStory = if (state.selectedStory?.id == storyId) null else state.selectedStory
-            )
+        val currentUserId = _uiState.value.currentUser.id
+        viewModelScope.launch {
+            _uiState.update { state ->
+                val updated = state.stories.filter { it.id != storyId }
+                state.copy(
+                    stories = updated,
+                    selectedStory = if (state.selectedStory?.id == storyId) null else state.selectedStory
+                )
+            }
+            StoriesApiService.deleteStory(storyId, currentUserId)
         }
     }
 
     fun reactToStory(storyId: Long, reaction: String) {
-        _uiState.update { state ->
-            val updated = state.stories.map { s ->
-                if (s.id == storyId) {
-                    val isSame = s.myReaction == reaction
-                    s.copy(
-                        myReaction = if (isSame) null else reaction,
-                        reactionsCount = if (isSame) maxOf(0, s.reactionsCount - 1) else if (s.myReaction == null) s.reactionsCount + 1 else s.reactionsCount
-                    )
-                } else s
-            }
-            state.copy(
-                stories = updated,
-                selectedStory = state.selectedStory?.let { sel ->
-                    if (sel.id == storyId) {
-                        val isSame = sel.myReaction == reaction
-                        sel.copy(
+        val currentUserId = _uiState.value.currentUser.id
+        viewModelScope.launch {
+            // Optimistic update
+            _uiState.update { state ->
+                val updated = state.stories.map { s ->
+                    if (s.id == storyId) {
+                        val isSame = s.myReaction == reaction
+                        s.copy(
                             myReaction = if (isSame) null else reaction,
-                            reactionsCount = if (isSame) maxOf(0, sel.reactionsCount - 1) else if (sel.myReaction == null) sel.reactionsCount + 1 else sel.reactionsCount
+                            reactionsCount = if (isSame) maxOf(0, s.reactionsCount - 1) else if (s.myReaction == null) s.reactionsCount + 1 else s.reactionsCount,
+                            isLiked = if (isSame) false else true
                         )
-                    } else sel
+                    } else s
                 }
-            )
+                state.copy(
+                    stories = updated,
+                    selectedStory = state.selectedStory?.let { sel ->
+                        if (sel.id == storyId) {
+                            val isSame = sel.myReaction == reaction
+                            sel.copy(
+                                myReaction = if (isSame) null else reaction,
+                                reactionsCount = if (isSame) maxOf(0, sel.reactionsCount - 1) else if (sel.myReaction == null) sel.reactionsCount + 1 else sel.reactionsCount,
+                                isLiked = if (isSame) false else true
+                            )
+                        } else sel
+                    }
+                )
+            }
+            StoriesApiService.reactToStory(storyId, currentUserId, reaction)
+            val updatedReactions = StoriesApiService.fetchReactions(storyId, currentUserId)
+            if (updatedReactions != null) {
+                _uiState.update { state ->
+                    state.copy(storyReactions = state.storyReactions + (storyId to updatedReactions))
+                }
+            }
+        }
+    }
+
+    fun fetchStoryViewers(storyId: Long) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isStoryViewersLoading = true) }
+            val viewers = StoriesApiService.fetchViewers(storyId)
+            _uiState.update { state ->
+                state.copy(
+                    storyViewers = state.storyViewers + (storyId to viewers),
+                    isStoryViewersLoading = false
+                )
+            }
+        }
+    }
+
+    fun fetchStoryComments(storyId: Long) {
+        val viewerId = _uiState.value.currentUser.id
+        viewModelScope.launch {
+            _uiState.update { it.copy(isStoryCommentsLoading = true) }
+            val comments = StoriesApiService.fetchComments(storyId, viewerId)
+            _uiState.update { state ->
+                state.copy(
+                    storyComments = state.storyComments + (storyId to comments),
+                    isStoryCommentsLoading = false
+                )
+            }
+        }
+    }
+
+    fun addStoryComment(storyId: Long, content: String, imageUrl: String? = null, parentId: Long? = null) {
+        val currentUserId = _uiState.value.currentUser.id
+        viewModelScope.launch {
+            val created = StoriesApiService.addComment(storyId, currentUserId, content, imageUrl, parentId)
+            if (created != null) {
+                _uiState.update { state ->
+                    val existing = state.storyComments[storyId] ?: emptyList()
+                    val updated = existing + created
+                    state.copy(storyComments = state.storyComments + (storyId to updated))
+                }
+            } else {
+                fetchStoryComments(storyId)
+            }
+        }
+    }
+
+    fun toggleHideStoryComment(storyId: Long, commentId: Long, hide: Boolean) {
+        val currentUserId = _uiState.value.currentUser.id
+        viewModelScope.launch {
+            _uiState.update { state ->
+                val existing = state.storyComments[storyId] ?: emptyList()
+                val updated = existing.map { if (it.id == commentId) it.copy(isHidden = hide) else it }
+                state.copy(storyComments = state.storyComments + (storyId to updated))
+            }
+            StoriesApiService.toggleHideComment(storyId, currentUserId, commentId, if (hide) "hide" else "unhide")
+        }
+    }
+
+    fun deleteStoryComment(storyId: Long, commentId: Long) {
+        val currentUserId = _uiState.value.currentUser.id
+        viewModelScope.launch {
+            _uiState.update { state ->
+                val existing = state.storyComments[storyId] ?: emptyList()
+                val updated = existing.filter { it.id != commentId && it.parentId != commentId }
+                state.copy(storyComments = state.storyComments + (storyId to updated))
+            }
+            StoriesApiService.deleteComment(storyId, commentId, currentUserId)
+        }
+    }
+
+    fun likeStoryComment(commentId: Long) {
+        val currentUserId = _uiState.value.currentUser.id
+        viewModelScope.launch {
+            StoriesApiService.likeComment(commentId, currentUserId)
+        }
+    }
+
+    fun replyToStory(storyId: Long, text: String) {
+        val currentUserId = _uiState.value.currentUser.id
+        viewModelScope.launch {
+            StoriesApiService.replyToStory(storyId, currentUserId, text)
+        }
+    }
+
+    fun shareStory(storyId: Long, destination: String = "feed", message: String = "") {
+        val currentUserId = _uiState.value.currentUser.id
+        viewModelScope.launch {
+            StoriesApiService.shareStory(storyId, currentUserId, destination, message)
         }
     }
 
@@ -1418,8 +1589,70 @@ class FeatheredViewModel : ViewModel() {
     // GROUPS & COMMUNITY METHODS
     // ==========================================
 
+    // ==========================================
+    // GROUPS & COMMUNITY METHODS (LIVE API)
+    // ==========================================
+
+    fun refreshGroups() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isGroupsLoading = true) }
+            val viewerId = _uiState.value.currentUser.id
+            val liveGroups = GroupsApiService.fetchGroups(viewerId)
+            val suggestions = GroupsApiService.fetchGroupSuggestions(viewerId)
+            val invites = GroupsApiService.fetchGroupInvites(viewerId)
+            _uiState.update { state ->
+                state.copy(
+                    groups = liveGroups,
+                    groupSuggestions = suggestions,
+                    groupInvites = invites,
+                    isGroupsLoading = false
+                )
+            }
+            val currentActiveId = _uiState.value.activeGroupId
+            if (currentActiveId != null) {
+                loadGroupData(currentActiveId)
+            }
+        }
+    }
+
+    fun loadGroupData(groupId: Long) {
+        val viewerId = _uiState.value.currentUser.id
+        viewModelScope.launch {
+            // 1. Group Details & member IDs
+            val (updatedGroup, memberIds) = GroupsApiService.fetchGroupDetails(groupId, viewerId)
+            if (updatedGroup != null) {
+                val fullGroup = if (memberIds.isNotEmpty()) updatedGroup.copy(members = memberIds) else updatedGroup
+                _uiState.update { state ->
+                    val existing = state.groups.map { if (it.id == groupId) fullGroup else it }
+                    val finalGroups = if (existing.none { it.id == groupId }) listOf(fullGroup) + existing else existing
+                    state.copy(groups = finalGroups)
+                }
+            }
+            // 2. Posts
+            _uiState.update { it.copy(isGroupPostsLoading = true) }
+            val posts = GroupsApiService.fetchGroupPosts(groupId, viewerId)
+            _uiState.update { state ->
+                val otherPosts = state.groupPosts.filter { it.groupId != groupId }
+                state.copy(groupPosts = posts + otherPosts, isGroupPostsLoading = false)
+            }
+            // 3. Members
+            val members = GroupsApiService.fetchGroupMembers(groupId)
+            _uiState.update { state ->
+                state.copy(groupMembers = state.groupMembers + (groupId to members))
+            }
+            // 4. Events
+            val events = GroupsApiService.fetchGroupEvents(groupId, viewerId)
+            _uiState.update { state ->
+                state.copy(groupEvents = state.groupEvents + (groupId to events))
+            }
+        }
+    }
+
     fun setActiveGroupId(groupId: Long?) {
         _uiState.update { it.copy(activeGroupId = groupId) }
+        if (groupId != null) {
+            loadGroupData(groupId)
+        }
     }
 
     fun createGroup(
@@ -1430,26 +1663,47 @@ class FeatheredViewModel : ViewModel() {
         profileImage: String,
         coverImage: String
     ) {
-        val newId = System.currentTimeMillis()
-        val newGroup = Group(
-            id = newId,
-            adminId = _uiState.value.currentUser.id,
-            name = name.ifBlank { "New Community" },
-            description = description,
-            isPrivate = type == "private",
-            category = category,
-            coverImageUrl = coverImage.ifBlank { "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1500&q=80" },
-            profileImageUrl = profileImage.ifBlank { "https://ui-avatars.com/api/?name=${name}&background=random" },
-            membersCount = 1,
-            isMember = true,
-            memberPostingAllowed = true,
-            members = listOf(_uiState.value.currentUser.id)
-        )
-        _uiState.update { state ->
-            state.copy(
-                groups = listOf(newGroup) + state.groups,
-                activeGroupId = newId
+        viewModelScope.launch {
+            val created = GroupsApiService.createGroup(
+                name = name.ifBlank { "New Community" },
+                description = description,
+                type = type,
+                category = category,
+                profileImage = profileImage,
+                coverImage = coverImage,
+                adminId = _uiState.value.currentUser.id
             )
+            if (created != null) {
+                _uiState.update { state ->
+                    state.copy(
+                        groups = listOf(created) + state.groups,
+                        activeGroupId = created.id
+                    )
+                }
+                loadGroupData(created.id)
+            } else {
+                val newId = System.currentTimeMillis()
+                val fallbackGroup = Group(
+                    id = newId,
+                    adminId = _uiState.value.currentUser.id,
+                    name = name.ifBlank { "New Community" },
+                    description = description,
+                    isPrivate = type == "private",
+                    category = category,
+                    coverImageUrl = coverImage.ifBlank { "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1500&q=80" },
+                    profileImageUrl = profileImage.ifBlank { "https://ui-avatars.com/api/?name=${name}&background=random" },
+                    membersCount = 1,
+                    isMember = true,
+                    memberPostingAllowed = true,
+                    members = listOf(_uiState.value.currentUser.id)
+                )
+                _uiState.update { state ->
+                    state.copy(
+                        groups = listOf(fallbackGroup) + state.groups,
+                        activeGroupId = newId
+                    )
+                }
+            }
         }
     }
 
@@ -1468,6 +1722,10 @@ class FeatheredViewModel : ViewModel() {
             }
             state.copy(groups = updatedGroups)
         }
+        viewModelScope.launch {
+            GroupsApiService.joinGroup(groupId, currentUserId)
+            loadGroupData(groupId)
+        }
     }
 
     fun leaveGroup(groupId: Long) {
@@ -1485,6 +1743,10 @@ class FeatheredViewModel : ViewModel() {
             }
             state.copy(groups = updatedGroups)
         }
+        viewModelScope.launch {
+            GroupsApiService.leaveOrRemoveMember(groupId, currentUserId, currentUserId)
+            loadGroupData(groupId)
+        }
     }
 
     fun deleteGroup(groupId: Long) {
@@ -1494,6 +1756,9 @@ class FeatheredViewModel : ViewModel() {
                 groupPosts = state.groupPosts.filter { it.groupId != groupId },
                 activeGroupId = if (state.activeGroupId == groupId) null else state.activeGroupId
             )
+        }
+        viewModelScope.launch {
+            GroupsApiService.deleteGroup(groupId)
         }
     }
 
@@ -1510,6 +1775,14 @@ class FeatheredViewModel : ViewModel() {
             }
             state.copy(groups = updated)
         }
+        viewModelScope.launch {
+            GroupsApiService.updateGroup(
+                groupId = groupId,
+                name = name,
+                description = description,
+                memberPostingAllowed = memberPostingAllowed
+            )
+        }
     }
 
     fun updateGroupImage(groupId: Long, isCover: Boolean, imageUrl: String) {
@@ -1521,19 +1794,24 @@ class FeatheredViewModel : ViewModel() {
             }
             state.copy(groups = updated)
         }
+        viewModelScope.launch {
+            GroupsApiService.updateGroup(
+                groupId = groupId,
+                coverImage = if (isCover) imageUrl else null,
+                profileImage = if (!isCover) imageUrl else null
+            )
+        }
     }
 
     fun postToGroup(
         groupId: Long,
         content: String,
         imageUrls: List<String> = emptyList(),
-        // Buy & sell params
         price: Double? = null,
         currency: String = "USD",
         condition: String? = null,
         location: String? = null,
         status: String = "available",
-        // Recruitment params
         jobTitle: String? = null,
         company: String? = null,
         jobType: String? = null,
@@ -1541,35 +1819,61 @@ class FeatheredViewModel : ViewModel() {
         applicationType: String? = null,
         applicationValue: String? = null
     ) {
-        val newPost = GroupPost(
-            id = System.currentTimeMillis(),
-            groupId = groupId,
-            author = _uiState.value.currentUser,
-            content = content,
-            imageUrls = imageUrls,
-            createdAt = "Just now",
-            likesCount = 0,
-            commentsCount = 0,
-            sharesCount = 0,
-            isLiked = false,
-            price = price,
-            currency = currency,
-            condition = condition,
-            location = location,
-            status = status,
-            jobTitle = jobTitle,
-            company = company,
-            jobType = jobType,
-            salary = salary,
-            applicationType = applicationType,
-            applicationValue = applicationValue
-        )
-        _uiState.update { state ->
-            state.copy(groupPosts = listOf(newPost) + state.groupPosts)
+        viewModelScope.launch {
+            val createdPost = GroupsApiService.createGroupPost(
+                groupId = groupId,
+                userId = _uiState.value.currentUser.id,
+                content = content,
+                mediaUrls = imageUrls,
+                price = price,
+                currency = currency,
+                condition = condition,
+                location = location,
+                status = status,
+                jobTitle = jobTitle,
+                company = company,
+                jobType = jobType,
+                salary = salary,
+                applicationType = applicationType,
+                applicationValue = applicationValue
+            )
+            if (createdPost != null) {
+                _uiState.update { state ->
+                    state.copy(groupPosts = listOf(createdPost) + state.groupPosts)
+                }
+            } else {
+                val newPost = GroupPost(
+                    id = System.currentTimeMillis(),
+                    groupId = groupId,
+                    author = _uiState.value.currentUser,
+                    content = content,
+                    imageUrls = imageUrls,
+                    createdAt = "Just now",
+                    likesCount = 0,
+                    commentsCount = 0,
+                    sharesCount = 0,
+                    isLiked = false,
+                    price = price,
+                    currency = currency,
+                    condition = condition,
+                    location = location,
+                    status = status,
+                    jobTitle = jobTitle,
+                    company = company,
+                    jobType = jobType,
+                    salary = salary,
+                    applicationType = applicationType,
+                    applicationValue = applicationValue
+                )
+                _uiState.update { state ->
+                    state.copy(groupPosts = listOf(newPost) + state.groupPosts)
+                }
+            }
         }
     }
 
     fun toggleLikeGroupPost(postId: Long, reaction: String = "like") {
+        val currentUserId = _uiState.value.currentUser.id
         _uiState.update { state ->
             val updated = state.groupPosts.map { post ->
                 if (post.id == postId) {
@@ -1584,34 +1888,45 @@ class FeatheredViewModel : ViewModel() {
             }
             state.copy(groupPosts = updated)
         }
+        viewModelScope.launch {
+            GroupsApiService.likeGroupPost(postId, currentUserId, reaction)
+        }
     }
 
     fun addGroupPostComment(postId: Long, text: String) {
         if (text.isBlank()) return
-        val newComment = Comment(
-            id = System.currentTimeMillis(),
-            author = _uiState.value.currentUser,
-            text = text,
-            timestamp = "Just now",
-            likesCount = 0,
-            isLiked = false
-        )
-        _uiState.update { state ->
-            val updated = state.groupPosts.map { post ->
-                if (post.id == postId) {
-                    post.copy(
-                        comments = post.comments + newComment,
-                        commentsCount = post.commentsCount + 1
-                    )
-                } else post
+        val currentUserId = _uiState.value.currentUser.id
+        viewModelScope.launch {
+            val createdComment = GroupsApiService.addGroupPostComment(postId, currentUserId, text)
+            val newComment = createdComment ?: Comment(
+                id = System.currentTimeMillis(),
+                author = _uiState.value.currentUser,
+                text = text,
+                timestamp = "Just now",
+                likesCount = 0,
+                isLiked = false
+            )
+            _uiState.update { state ->
+                val updated = state.groupPosts.map { post ->
+                    if (post.id == postId) {
+                        post.copy(
+                            comments = post.comments + newComment,
+                            commentsCount = post.commentsCount + 1
+                        )
+                    } else post
+                }
+                state.copy(groupPosts = updated)
             }
-            state.copy(groupPosts = updated)
         }
     }
 
     fun deleteGroupPost(postId: Long) {
+        val currentUserId = _uiState.value.currentUser.id
         _uiState.update { state ->
             state.copy(groupPosts = state.groupPosts.filter { it.id != postId })
+        }
+        viewModelScope.launch {
+            GroupsApiService.deleteGroupPost(postId, currentUserId)
         }
     }
 
@@ -1625,34 +1940,35 @@ class FeatheredViewModel : ViewModel() {
     }
 
     fun inviteUserToGroup(groupId: Long, userId: Long) {
-        val group = _uiState.value.groups.find { it.id == groupId } ?: return
-        val newInvite = GroupInvite(
-            id = System.currentTimeMillis(),
-            groupId = groupId,
-            group = group,
-            inviter = _uiState.value.currentUser,
-            inviteeId = userId,
-            createdAt = "Just now"
-        )
-        _uiState.update { state ->
-            state.copy(groupInvites = state.groupInvites + newInvite)
+        val currentUserId = _uiState.value.currentUser.id
+        viewModelScope.launch {
+            GroupsApiService.sendGroupInvite(groupId, currentUserId, listOf(userId))
         }
     }
 
     fun acceptGroupInvite(inviteId: Long, groupId: Long) {
+        val currentUserId = _uiState.value.currentUser.id
         joinGroup(groupId)
         _uiState.update { state ->
             state.copy(groupInvites = state.groupInvites.filter { it.id != inviteId })
         }
+        viewModelScope.launch {
+            GroupsApiService.respondGroupInvite(inviteId, groupId, currentUserId, "accepted")
+        }
     }
 
     fun declineGroupInvite(inviteId: Long) {
+        val currentUserId = _uiState.value.currentUser.id
         _uiState.update { state ->
             state.copy(groupInvites = state.groupInvites.filter { it.id != inviteId })
+        }
+        viewModelScope.launch {
+            GroupsApiService.respondGroupInvite(inviteId, 0L, currentUserId, "declined")
         }
     }
 
     fun toggleMemberPosting(groupId: Long, userId: Long, disabled: Boolean) {
+        val currentUserId = _uiState.value.currentUser.id
         _uiState.update { state ->
             val currentGroupDisabled = state.groupPostingDisabledOverrides[groupId] ?: emptySet()
             val newGroupDisabled = if (disabled) currentGroupDisabled + userId else currentGroupDisabled - userId
@@ -1660,18 +1976,46 @@ class FeatheredViewModel : ViewModel() {
                 groupPostingDisabledOverrides = state.groupPostingDisabledOverrides + (groupId to newGroupDisabled)
             )
         }
+        viewModelScope.launch {
+            val payload = JSONObject().apply {
+                put("group_id", groupId)
+                put("user_id", userId)
+                put("disabled", disabled)
+                put("actor_id", currentUserId)
+            }
+            GroupsApiService.patchMemberAction("toggle-posting", payload)
+            val members = GroupsApiService.fetchGroupMembers(groupId)
+            _uiState.update { it.copy(groupMembers = it.groupMembers + (groupId to members)) }
+        }
     }
 
     fun setMemberRole(groupId: Long, userId: Long, role: String) {
+        val currentUserId = _uiState.value.currentUser.id
         _uiState.update { state ->
             val currentGroupRoles = state.groupMembersOverrides[groupId] ?: emptyMap()
             state.copy(
                 groupMembersOverrides = state.groupMembersOverrides + (groupId to (currentGroupRoles + (userId to role)))
             )
         }
+        viewModelScope.launch {
+            val action = when (role) {
+                "admin" -> "make-admin"
+                "moderator" -> "make-moderator"
+                else -> "remove-admin"
+            }
+            val payload = JSONObject().apply {
+                put("group_id", groupId)
+                put("user_id", userId)
+                put("actor_id", currentUserId)
+            }
+            GroupsApiService.patchMemberAction(action, payload)
+            val members = GroupsApiService.fetchGroupMembers(groupId)
+            _uiState.update { it.copy(groupMembers = it.groupMembers + (groupId to members)) }
+        }
     }
 
     fun removeGroupMember(groupId: Long, userId: Long) {
+        val currentUserId = _uiState.value.currentUser.id
         _uiState.update { state ->
             val updatedGroups = state.groups.map { group ->
                 if (group.id == groupId) {
@@ -1683,6 +2027,11 @@ class FeatheredViewModel : ViewModel() {
                 } else group
             }
             state.copy(groups = updatedGroups)
+        }
+        viewModelScope.launch {
+            GroupsApiService.leaveOrRemoveMember(groupId, userId, currentUserId)
+            val members = GroupsApiService.fetchGroupMembers(groupId)
+            _uiState.update { it.copy(groupMembers = it.groupMembers + (groupId to members)) }
         }
     }
 

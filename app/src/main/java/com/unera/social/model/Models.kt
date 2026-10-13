@@ -192,13 +192,72 @@ data class Story(
     val backgroundStyle: String = "linear-gradient(45deg, #1877F2, #0055FF)",
     val musicTitle: String? = null,
     val musicUrl: String? = null,
-    val viewsCount: Int = 18,
-    val reactionsCount: Int = 5,
-    val commentsCount: Int = 2,
-    val sharesCount: Int = 1,
+    val viewsCount: Int = 0,
+    val reactionsCount: Int = 0,
+    val commentsCount: Int = 0,
+    val sharesCount: Int = 0,
     val myReaction: String? = null,
     val isLiked: Boolean = false,
-    val viewers: List<User> = emptyList()
+    val viewers: List<User> = emptyList(),
+    val duration: Int = 90,
+    val musicStart: Int = 0,
+    val musicEnd: Int? = null,
+    val musicDuration: Int = 0,
+    val effectId: String = "none",
+    val mediaUrls: List<String> = emptyList()
+)
+
+data class StoryViewer(
+    val id: Long = 0L,
+    val storyId: Long = 0L,
+    val userId: Long,
+    val viewedAt: String = "Just now",
+    val reaction: String? = null,
+    val name: String,
+    val username: String,
+    val profileImageUrl: String,
+    val isVerified: Boolean = false,
+    val role: String = "user"
+)
+
+data class StoryComment(
+    val id: Long,
+    val storyId: Long,
+    val userId: Long,
+    val parentId: Long? = null,
+    val content: String,
+    val imageUrl: String? = null,
+    val createdAt: String = "Just now",
+    val likesCount: Int = 0,
+    val likedByMe: Boolean = false,
+    val repliesCount: Int = 0,
+    val name: String,
+    val username: String,
+    val profileImageUrl: String,
+    val isHidden: Boolean = false
+)
+
+data class StoryAnalytics(
+    val totalViews: Int = 0,
+    val uniqueViewers: Int = 0,
+    val viewsWithReactions: Int = 0,
+    val reactionBreakdown: Map<String, Int> = emptyMap(),
+    val completionRate: Double = 0.0,
+    val averageViewTime: Double = 0.0
+)
+
+data class StoryReactionItem(
+    val userId: Long,
+    val type: String,
+    val name: String,
+    val profileImageUrl: String
+)
+
+data class StoryReactionsData(
+    val reactions: List<StoryReactionItem> = emptyList(),
+    val counts: Map<String, Int> = emptyMap(),
+    val myReaction: String? = null,
+    val commentsCount: Int = 0
 )
 
 data class Reel(
